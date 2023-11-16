@@ -1,1 +1,112 @@
+# These first few lines will import the Python modules necessary
+# for the program to function. Tkinter is for the application’s GUI,
+# String is for the program’s input, and Random is there to make sure
+# that the users will have to guess a new word every game.
 
+from tkinter import *
+from tkinter import messagebox, ttk
+from string import ascii_uppercase
+import random
+
+
+# These lines will be the declaration of the game’s word pool.
+# The words are stored as dictionaries, which makes it possible
+# for the game to pick words by category.
+
+wordlist = {
+    "ANIMAL": ["LION", "PANDA", "TIGER", "DOG", "CAT", "RABBIT", "ELEPHANT", "GIRAFFE", "ZEBRA", "KANGAROO"],
+    "FRUIT": ["APPLE", "BANANA", "CHERRY", "GRAPE", "KIWI", "LEMON", "MANGO", "ORANGE", "PEACH", "PEAR"],
+    "COUNTRY": ["ARGENTINA", "BRAZIL", "CANADA", "DENMARK", "EGYPT", "FRANCE", "GREECE", "HONDURAS", "INDIA", "JAPAN"],
+    "COLOR": ["BLUE", "GREEN", "ORANGE", "PURPLE", "RED", "YELLOW", "BLACK", "BROWN", "WHITE", "PINK"],
+    "MONTH": ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
+}
+
+
+# The game’s main window is created with these lines.
+# Also, the images representing the Hangman are loaded in and made ready to use.
+
+main = Tk()
+main.title("Hangman")
+main.resizable(False, False)
+
+states = [PhotoImage(file=f"hangman/img{i}.png") for i in range(10)]
+
+
+# This first function will dictate the game's initial state when the program is opened or the user starts a new game.
+# Here is where the program picks the word to be guessed.
+# There is also a hint section showing the chosen word's classification.
+
+def gameStart():
+    global guesses, wordSpaced
+    img.config(image = states[0])
+    guesses = 0
+    wordgroup = random.choice(list(wordlist.keys()))
+    word = random.choice(wordlist[wordgroup])
+    wordSpaced = " ".join(word)
+    anslbl.set(" ".join("_" * len(word)))
+    hint = ttk.Label(mainframe)
+    hint.config(text=f"    This word is a/an {wordgroup}.    ")
+    hint.grid(row=0, column=0, padx=30, pady=5)
+
+
+# This next function will receive the user's chosen letters and check whether they are correct or not.
+# If the letter is correct, The function will display the letter in the answer field.
+# If the letter is incorrect, the function will replace the hangman's image, which shows the user
+# how close they are to losing the round.
+
+def answer(letter):
+    global guesses
+    if guesses < 10:
+        txt = list(wordSpaced)
+        guessed = list(anslbl.get())
+        if wordSpaced.count(letter) > 0:
+            for c in range(len(txt)):
+                if txt[c] == letter:
+                    guessed[c] = letter
+                anslbl.set("".join(guessed))
+                if anslbl.get() == wordSpaced:
+                    messagebox.showinfo("You Guessed the Word!", "Press OK to play again.")
+                    gameStart()
+        else:
+            guesses += 1
+            img.config(image=states[guesses])
+            if guesses == 9:
+                messagebox.showwarning("Game Over!",f"The word was {wordSpaced.replace(' ', '')}.")
+                gameStart()
+
+
+# These next lines will set up the game's interface and assets, such as the hangman images,
+# the on-screen keyboard, the answer field, and the new game button.
+
+mainframe = ttk.LabelFrame(main)
+mainframe.grid(row=0, column=0)
+
+imgfrm = ttk.LabelFrame(mainframe, width=30)
+img = ttk.Label(imgfrm)
+imgfrm.grid(row=1, column=0, pady=5)
+img.grid(row=0, column=0, padx=10, pady=10)
+img.config(image=states[0])
+
+anslbl = StringVar()
+Label(mainframe, textvariable=anslbl, font=("Consolas 16 bold")).grid(row=2, column=0, padx=10, pady=5)
+
+kbfrm = ttk.LabelFrame(mainframe)
+kbfrm.grid(row=3, column = 0)
+
+
+# These lines, in particular, are for the creation of the on-screen keyboard using the ascii_uppercase string constant.
+
+n = 0
+for c in ascii_uppercase:
+    Button(kbfrm, text=c, command=lambda c=c: answer(c), font=("Helvetica 16"), width=2).grid(padx=2, pady=2,row=1 + n // 13, column=n % 13)
+    n += 1
+
+ngfrm = LabelFrame(kbfrm).grid(row=4, column=5, columnspan=3, padx=2, pady=5)
+Button(ngfrm, text="New Game", command=lambda: gameStart(), font=("Helvetica 10")).grid(padx=2, pady=2)
+
+
+# This will ensure that the game starts as soon as the program opens.
+
+gameStart()
+
+main.mainloop()
